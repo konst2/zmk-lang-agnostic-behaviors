@@ -18,8 +18,25 @@
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
+/*
+Behavior для переключения языков (EN/RU).
+он позволяет переключаться между двумя языками и соответствующими слоями.
+Использует глобальную переменную для хранения текущего состояния языка.
+Параметры поведения:
+- param1: Целевой язык (по номеру слоя -- обычно 0 - английский, 1 - русский, любое другое значение - переключить на противоположный)
+Пример использования в keymap:
+        ls: lang_switch {
+            compatible = "zmk,behavior-lang-switch";
+            #binding-cells = <1>;
+            // Коды клавиш  F19-переключение на EN F18 = переключение на RU
+            bindings = <&kp F19>, <&kp F18>;
+            // раннее определенные слои для EN и RU
+            en_layer = <ENGLISH>;
+            ru_layer = <RUSSIAN>;
+        };
+*/
 struct behavior_lang_config {
-    struct zmk_behavior_binding behavior_ru;  // переклюключение на русский
+    struct zmk_behavior_binding behavior_ru;  // переключение на русский
     struct zmk_behavior_binding behavior_en;  // переключение на английский
     uint8_t layer_en; // слой EN
     uint8_t layer_ru; // слой RU
@@ -38,19 +55,19 @@ static int lang_keymap_binding_pressed(struct zmk_behavior_binding *binding,
 
     uint8_t target_language;
 
-    // Проверяем параметр (0 - английский, 1 - русский, любое другое значение - переключить на противоположный)
-    if (binding->param1 == 0) {
-        target_language = 0; // Английский
+    // Проверяем параметр (layer_en - английский, layer_ru - русский, любое другое значение - переключить на противоположный)
+    if (binding->param1 == config->layer_en) {
+        target_language = config->layer_en; // Английский
     } 
-    else if (binding->param1 == 1) {
-        target_language = 1; // Русский
+    else if (binding->param1 == config->layer_ru) {
+        target_language = config->layer_ru; // Русский
     }
     else {
         // Любое другое значение - переключить на противоположный язык
-        if (get_language_state() == 0) {
-            target_language = 1; // Переключить с английского на русский
+        if (get_language_state() == config->layer_en) {
+            target_language = config->layer_ru; // Переключить с английского на русский
         } else {
-            target_language = 0; // Переключить с русского на английский
+            target_language = config->layer_en; // Переключить с русского на английский
         }
     }
     
@@ -64,7 +81,7 @@ static int lang_keymap_binding_pressed(struct zmk_behavior_binding *binding,
     set_language_state(target_language);
     
     // Переключаем слой в зависимости от выбранного языка
-    if (target_language == 0) {
+    if (target_language == config->layer_en) {
         // Английский язык
         zmk_keymap_layer_to(config->layer_en, false);
         // Помещаем в очередь нажатие И отпускание 
