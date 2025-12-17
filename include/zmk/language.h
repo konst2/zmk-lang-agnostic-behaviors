@@ -8,6 +8,9 @@
 
 #include <stdint.h>
 
+// Задержка на переключение языка системы в мс
+#define KP_ON_LANG_DELAY_MS 80
+
 // текущий язык клавиатуры -- 0 английский, 1 -- русский
 uint8_t get_kb_language();
 void set_kb_language(uint8_t lang);

@@ -29,22 +29,72 @@ struct behavior_kp_on_lang_config {
 };
 
 struct behavior_kp_on_lang_data {
+    const struct device *dev;
     struct k_work_delayable delayed_keypress;
     uint32_t keycode;
     bool press_pending; // флаг ожидания нажатия -- чтобы отпускание клавиши сработало только после отложенного нажатия
+    bool release_pending; // флаг того что реальное отпускание уже произошло во время ожидания отложенного нажатия -- чтобы отработать отпускание сразу после отложенногонажатия
 };
+
+// функция переключения языка ОС
+static void switch_os_language(
+    uint8_t language_to_switch,
+    const struct behavior_kp_on_lang_config *config,
+    struct zmk_behavior_binding_event event
+) {
+    if (language_to_switch != get_os_language()) {
+
+        // ### Нажимаем клавишу переключения в зависимости от выбранного языка
+        if (language_to_switch == config->layer_en) {
+            // Английский язык
+            // Помещаем в очередь нажатие И отпускание 
+            zmk_behavior_queue_add(&event, config->behavior_en, true, 0);
+            zmk_behavior_queue_add(&event, config->behavior_en, false, 0);
+            LOG_DBG("Switched to English language, layer %d", config->layer_en);
+        } 
+        else {
+            // Русский язык
+            // Помещаем в очередь нажатие И отпускание 
+            zmk_behavior_queue_add(&event, config->behavior_ru, true, 0);
+            zmk_behavior_queue_add(&event, config->behavior_ru, false, 0);
+            LOG_DBG("Switched to Russian language, layer %d", config->layer_ru);
+        }
+        set_os_language(language_to_switch);
+    }
+}
 
 // функция для отложенного нажатия клавиши
 static void delayed_keypress_handler(struct k_work *work) {
     struct k_work_delayable *dwork = k_work_delayable_from_work(work);
     struct behavior_kp_on_lang_data *data = CONTAINER_OF(dwork, struct behavior_kp_on_lang_data, delayed_keypress);
+    const struct device *dev = data->dev;
+    const struct behavior_kp_on_lang_config *config = dev->config;
 
     raise_zmk_keycode_state_changed_from_encoded(data->keycode, true, k_uptime_get());
     data->press_pending = false;
+
+    // если во время ожидания произошло реальное отпускание, отрабатываем его
+    if (!data->release_pending) {
+        return;
+    }
+    data->release_pending = false;
+
+    // отпускаем клавишу
+    raise_zmk_keycode_state_changed_from_encoded(data->keycode, false, k_uptime_get());
+    // переключаем язык клавиатуры назад, если нужно
+    struct zmk_behavior_binding_event dummy_event = {
+        .position = 0,
+        .timestamp = k_uptime_get(),
+    };
+    switch_os_language(get_kb_language(), config, dummy_event);
 }
 
 static int behavior_kp_on_lang_init(const struct device *dev) { 
     struct behavior_kp_on_lang_data *data = dev->data;
+    
+    data->dev = dev;
+    data->press_pending = false;
+    data->release_pending = false;
     k_work_init_delayable(&data->delayed_keypress, delayed_keypress_handler);
     return 0;
 };
@@ -59,29 +109,14 @@ static int kp_on_lang_keymap_binding_pressed(struct zmk_behavior_binding *bindin
     // 1. переключаем язык клавиатуры, если он не совпадает с целевым
     if (get_os_language() != config->language) {
 
-        // ### Нажимаем клавишу переключения в зависимости от выбранного языка
-        if (config->language == config->layer_en) {
-            // Английский язык
-            // Помещаем в очередь нажатие И отпускание 
-            zmk_behavior_queue_add(&event, config->behavior_en, true, 0);
-            zmk_behavior_queue_add(&event, config->behavior_en, false, 0);
-            LOG_DBG("Switched to English language, layer %d", config->layer_en);
-        } 
-        else {
-            // Русский язык
-            // Помещаем в очередь нажатие И отпускание 
-            zmk_behavior_queue_add(&event, config->behavior_ru, true, 0);
-            zmk_behavior_queue_add(&event, config->behavior_ru, false, 0);
-            LOG_DBG("Switched to Russian language, layer %d", config->layer_ru);
-        }
-        set_os_language(config->language);
-        // ###
+        // Нажимаем клавишу переключения в зависимости от выбранного языка
+        switch_os_language(config->language, config, event);
 
         // 2. Возвращаем нажатие самой клавиши с задержкой, чтобы сработало переключения языков
         data->keycode = binding->param1;
         k_work_cancel_delayable(&data->delayed_keypress); // отменяем предыдущее нажатие если пользователь быстро снова нажал клавишу
         data->press_pending = true;
-        k_work_reschedule_for_queue(&k_sys_work_q, &data->delayed_keypress, K_MSEC(80));
+        k_work_reschedule_for_queue(&k_sys_work_q, &data->delayed_keypress, K_MSEC(KP_ON_LANG_DELAY_MS));
         return ZMK_BEHAVIOR_OPAQUE;
     }
 
@@ -96,41 +131,16 @@ static int kp_on_lang_keymap_binding_released(struct zmk_behavior_binding *bindi
     const struct behavior_kp_on_lang_config *config = dev->config;
     struct behavior_kp_on_lang_data *data = dev->data;
 
-    // 1. переключаем язык клавиатуры назад, если нужно
-    if (get_os_language() != get_kb_language()) {
-
-        // ### Нажимаем клавишу переключения в зависимости от выбранного языка
-        if (get_kb_language() == config->layer_en) {
-            // Английский язык
-            // Помещаем в очередь нажатие И отпускание 
-            zmk_behavior_queue_add(&event, config->behavior_en, true, 0);
-            zmk_behavior_queue_add(&event, config->behavior_en, false, 0);
-            LOG_DBG("Switched to English language, layer %d", config->layer_en);
-        } 
-        else {
-            // Русский язык
-            // Помещаем в очередь нажатие И отпускание 
-            zmk_behavior_queue_add(&event, config->behavior_ru, true, 0);
-            zmk_behavior_queue_add(&event, config->behavior_ru, false, 0);
-            LOG_DBG("Switched to Russian language, layer %d", config->layer_ru);
-        }
-        set_os_language(get_kb_language());
-        // ###
-
-    }
-
-    // 2. Возвращаем отпускание самой клавиши
-    // синхронизация press/release
-    if (data->press_pending && data->keycode == binding->param1) {
-        // Press ещё не отправлен — отменяем и отправляем оба события немедленно
-        k_work_cancel_delayable(&data->delayed_keypress);
-        raise_zmk_keycode_state_changed_from_encoded(binding->param1, true, k_uptime_get());
-        raise_zmk_keycode_state_changed_from_encoded(binding->param1, false, k_uptime_get());
-        data->press_pending = false;
+    // 0. проверяем, не произошло ли реальное отпускание во время ожидания отложенного нажатия
+    if (data->press_pending) {
+        data->release_pending = true;
         return ZMK_BEHAVIOR_OPAQUE;
     }
 
-    // Press уже отправлен (или не был запланирован) — просто release
+    // 1. переключаем язык клавиатуры назад, если нужно
+    switch_os_language(get_kb_language(), config, event);
+
+    // 2. Возвращаем отпускание самой клавиши
     return raise_zmk_keycode_state_changed_from_encoded(binding->param1, false, event.timestamp);
 }
 
