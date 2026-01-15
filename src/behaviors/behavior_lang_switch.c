@@ -55,6 +55,12 @@ static int lang_keymap_binding_pressed(struct zmk_behavior_binding *binding,
 
     uint8_t target_language;
 
+    // 0. проверяем не нажата ли в данный момент клавиша-модификатор
+    if (get_modifiers_counter() > 0) {
+        // Если нажата, не переключаем язык
+        return ZMK_BEHAVIOR_OPAQUE;
+    }
+
     // 1. Определяем целевой язык
     // Проверяем параметр (layer_en - английский, layer_ru - русский, любое другое значение - переключить на противоположный)
     if (binding->param1 == config->layer_en) {
