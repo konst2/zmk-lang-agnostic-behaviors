@@ -19,6 +19,10 @@ void set_kb_language(uint8_t lang);
 uint8_t get_os_language();
 void set_os_language(uint8_t lang);
 
+// язык клавиатуры который был актуален до нажатия первого модификатора
+uint8_t get_kb_language_before_modifiers();
+void set_kb_language_before_modifiers(uint8_t lang);
+
 // счётчик нажатых на текущий момент модификаторов CTRL, ALT, CMD
 uint8_t get_modifiers_counter();
 void increment_modifiers_counter();

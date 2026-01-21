@@ -3,3 +3,17 @@ description: Press-on-modifier behavior for counter functionality
 compatible: "zmk,behavior-modifier-press"
 
 include: one_param.yaml
+
+properties:
+  bindings:
+    type: phandle-array
+    required: true
+    description: First binding is for English keycode, second for Russian keycode
+  en_layer:
+    type: int
+    required: true
+    description: Layer number for English layout
+  ru_layer:
+    type: int
+    required: true
+    description: Layer number for Russian layout

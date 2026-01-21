@@ -60,6 +60,10 @@ static int lang_keymap_binding_pressed(struct zmk_behavior_binding *binding,
         // Если нажата, не переключаем язык
         return ZMK_BEHAVIOR_OPAQUE;
     }
+    // и не на каком-то слое кроме базовых
+    if (!zmk_keymap_layer_active(config->layer_en) && !zmk_keymap_layer_active(config->layer_ru)) {
+        return ZMK_BEHAVIOR_OPAQUE;
+    }
 
     // 1. Определяем целевой язык
     // Проверяем параметр (layer_en - английский, layer_ru - русский, любое другое значение - переключить на противоположный)
@@ -84,32 +88,8 @@ static int lang_keymap_binding_pressed(struct zmk_behavior_binding *binding,
         zmk_keymap_layer_to(target_language, false);
     }
 
-
     // 3. Устанавливаем язык ОС
-    // Если язык уже активен в ОС, ничего не делаем
-    if (get_os_language() == target_language) {
-        LOG_DBG("Language %d is already active", target_language);
-        return ZMK_BEHAVIOR_OPAQUE;
-    }
-
-
-    // ### Нажимаем клавишу переключения в зависимости от выбранного языка
-    if (target_language == config->layer_en) {
-        // Английский язык
-        // Помещаем в очередь нажатие И отпускание 
-        zmk_behavior_queue_add(&event, config->behavior_en, true, 0);
-        zmk_behavior_queue_add(&event, config->behavior_en, false, 0);
-        LOG_DBG("Switched to English language, layer %d", config->layer_en);
-    } 
-    else {
-        // Русский язык
-        // Помещаем в очередь нажатие И отпускание 
-        zmk_behavior_queue_add(&event, config->behavior_ru, true, 0);
-        zmk_behavior_queue_add(&event, config->behavior_ru, false, 0);
-        LOG_DBG("Switched to Russian language, layer %d", config->layer_ru);
-    }
-    set_os_language(target_language);
-    // ###
+    switch_os_language(target_language, config->layer_en, config->behavior_ru, config->behavior_en, event);
 
     return ZMK_BEHAVIOR_OPAQUE;
 }
