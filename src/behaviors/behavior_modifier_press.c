@@ -45,7 +45,7 @@ static int modifier_press_binding_pressed(struct zmk_behavior_binding *binding,
         if (zmk_keymap_layer_active(config->layer_ru)) {
         // 3. переключаем язык клавиатуры и ОС на английский, меняем слой
             set_kb_language(config->layer_en);
-            zmk_keymap_layer_to(config->layer_en, false);
+            zmk_keymap_layer_to(config->layer_en) //, false);
             switch_os_language(config->layer_en, config->layer_en, config->behavior_ru, config->behavior_en, event);
         }
     }
@@ -65,7 +65,7 @@ static int modifier_press_binding_released(struct zmk_behavior_binding *binding,
     if (get_modifiers_counter() == 0 && get_kb_language_before_modifiers() == config->layer_ru) {
         // 2. переключаем язык клавиатуры и ОС на русский, меняем слой
         set_kb_language(config->layer_ru);
-        zmk_keymap_layer_to(config->layer_ru, false);
+        zmk_keymap_layer_to(config->layer_ru) //, false);
         switch_os_language(config->layer_ru, config->layer_en, config->behavior_ru, config->behavior_en, event);
     }
 

@@ -85,7 +85,7 @@ static int lang_keymap_binding_pressed(struct zmk_behavior_binding *binding,
     // 2. Устанавливаем язык клавиатуры и переключаем слой
     if (get_kb_language() != target_language) {
         set_kb_language(target_language);
-        zmk_keymap_layer_to(target_language, false);
+        zmk_keymap_layer_to(target_language) //, false);
     }
 
     // 3. Устанавливаем язык ОС
