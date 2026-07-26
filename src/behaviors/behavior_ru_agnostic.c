@@ -11,9 +11,9 @@
 //#include <stdlib.h>
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
-//#include <drivers/behavior.h>
+#include <drivers/behavior.h>
 #include <zephyr/logging/log.h>
-#include <zephyr/sys/util.h>  // ???
+#include <zephyr/sys/util.h>
 
 #include <zmk/event_manager.h>
 #include <zmk/keymap.h>
@@ -21,7 +21,7 @@
 #include <zmk/endpoints.h>
 #include <zmk/hid.h>
 #include <zmk/language.h>
-
+#include <zmk/events/keycode_state_changed.h>
 
 #define DT_DRV_COMPAT zmk_behavior_ru_agnostic
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
