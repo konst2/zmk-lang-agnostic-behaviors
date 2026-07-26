@@ -1,0 +1,15 @@
+description: Layout agnostic symbols for Russian layer
+
+compatible: "zmk,behavior-ru-agnostic"
+
+include: one_param.yaml
+
+properties:
+  en_layer:
+    type: int
+    required: true
+    description: Layer number for English layout
+  ru_layer:
+    type: int
+    required: true
+    description: Layer number for Russian layout
