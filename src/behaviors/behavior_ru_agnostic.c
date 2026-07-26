@@ -46,6 +46,7 @@ static struct pressed_state pressed_states[MAX_ZMK_KEYMAP_LEN] = {0};
 // Формат: { Английская_базовая, Русская_базовая }
 static const uint32_t mappings[][2] = {
     { QUESTION,  AMPS     }, // ?
+    { QMARK,     AMPS     }, // ? - синоним
     { SEMICOLON, DLLR     }, // ;
     { COLON,     CARET    }, // :
     { DQT,       AT       }, // "
