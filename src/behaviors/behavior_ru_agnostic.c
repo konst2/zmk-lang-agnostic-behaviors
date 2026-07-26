@@ -45,8 +45,13 @@ static struct pressed_state pressed_states[MAX_ZMK_KEYMAP_LEN] = {0};
 // Таблица маппинга (только базовые клавиши)
 // Формат: { Английская_базовая, Русская_базовая }
 static const uint32_t mappings[][2] = {
-    { DOT,   SLASH }, // . -> . (на русской раскладке)
-    // { COMMA, B },  // Раскомментируй и добавь остальные
+    { QUESTION,  AMPS     }, // ?
+    { SEMICOLON, DLLR     }, // ;
+    { COLON,     CARET    }, // :
+    { DQT,       AT       }, // "
+    { SLASH,     PIPE     }, // /
+    { DOT,       SLASH    }, // .
+    { COMMA,     QUESTION }, // ,
 };
 #define MAPPINGS_COUNT ARRAY_SIZE(mappings)
 
