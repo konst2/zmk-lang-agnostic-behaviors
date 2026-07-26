@@ -33,11 +33,12 @@ struct behavior_ru_agnostic_config {
 
 
 // Глобальный массив для отслеживания нажатий по позициям клавиш
+#define MAX_ZMK_KEYMAP_LEN 300  // количество клавиш на клавиатуре -- с запасом
 struct pressed_state {
     uint32_t actual_param; // Запакованный параметр (моды + keycode)
     bool     is_active;
 };
-static struct pressed_state pressed_states[ZMK_KEYMAP_LEN] = {0};
+static struct pressed_state pressed_states[MAX_ZMK_KEYMAP_LEN] = {0};
 
 
 // ------------ Мапинг клавиш
@@ -81,7 +82,7 @@ static int ru_agnostic_pressed(struct zmk_behavior_binding *binding,
     }
 
     // 3. Сохраняем итоговый код клавиши для этой позиции, чтобы корректно отпустить именно его
-    if (event.position < ZMK_KEYMAP_LEN) {
+    if (event.position < MAX_ZMK_KEYMAP_LEN) {
         pressed_states[event.position].actual_param = key_to_send;
         pressed_states[event.position].is_active = true;
     }
@@ -94,7 +95,7 @@ static int ru_agnostic_pressed(struct zmk_behavior_binding *binding,
 static int ru_agnostic_released(struct zmk_behavior_binding *binding,
                                         struct zmk_behavior_binding_event event) {
     // 1. Проверка на валидность позиции и активность
-    if (event.position >= ZMK_KEYMAP_LEN || !pressed_states[event.position].is_active) {
+    if (event.position >= MAX_ZMK_KEYMAP_LEN || !pressed_states[event.position].is_active) {
         return -EINVAL;
     }
 
